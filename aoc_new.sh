@@ -1,12 +1,14 @@
-function aoc-new() {
-    cargo new $1;
-    mkdir $1/src/bin;
-    rm $1/src/main.rs;
-    BASE=$(echo `date +https://adventofcode.com/%Y/day/%d` | sed 's/\/0/\//g');
-    BASE_CONTENTS=`curl "$BASE"`;
+function part1() {
+    N=$(printf "day-%02d" $1)
+    cargo new $N
+    mkdir $N/src/bin
+    rm $N/src/main.rs
+    BASE=`date +https://adventofcode.com/%Y/day/$1`;
+    # add --cookie "session=$AOC_COOKIE" to access part 2
+    BASE_CONTENTS=`curl "$BASE"`
     # we need to echo BASE_CONTENTS in quotes and do the strange \n stuff because \n is a line terminator so we do some weird workarounds
-    TEST_CASES=`echo "$BASE_CONTENTS" | tr '\n' '|' | sed -e 's|.*<pre><code>\(.*\)</code></pre>.*|\1|' | sed 's/|/\n/g'`
-    TEST_RESULT=`echo "$BASE_CONTENTS" | tr '\n' '|' | sed -e 's|.*<code><em>\(.*\)</em></code>.*|\1|' | sed 's/|/\n/g'`
+    TEST_CASES=`echo "$BASE_CONTENTS" | tr '\n' '\r' | sed -e 's|.*<pre><code>\(.*\)\r</code></pre>.*|\1|' -e 's/\r/\n\t\t\t/g'`
+    TEST_RESULT=`echo "$BASE_CONTENTS" | tr '\n' '\r' | sed -e 's|.*<code><em>\(.*\)</em></code>.*|\1|'`
     echo "fn main() {
     let input = include_str!(\"./input1.txt\");
     let output = part1(input);
@@ -23,13 +25,16 @@ mod tests {
 
     #[test]
     fn part1_test() {
-        let result = part1(\"$TEST_CASES\");
+        let result = part1(
+            \"$TEST_CASES\",
+        );
         assert_eq!(result, $TEST_RESULT);
     }
-}" > $1/src/bin/part1.rs;
-    curl --cookie "session=$AOC_COOKIE" $BASE/input > $1/src/bin/input1.txt
-    cd $1;
+}" > $N/src/bin/part1.rs;
+    curl --cookie "session=$AOC_COOKIE" $BASE/input > $N/src/bin/input1.txt
+    cd $N;
     unset TEST_CASES;
     unset TEST_RESULT;
 }
-aoc-new $1;
+
+"$@"
