@@ -1,10 +1,10 @@
 fn main() {
     let input = include_str!("./input2.txt");
-    let output = part1(input);
+    let output = part2(input);
     dbg!(output);
 }
 
-fn part1(input: &str) -> u32 {
+fn part2(input: &str) -> u32 {
     input
         .lines()
         .map(|line| {
@@ -43,8 +43,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn part1_test() {
-        let result = part1(
+    fn part2_test() {
+        let result = part2(
             "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
             Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
             Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
