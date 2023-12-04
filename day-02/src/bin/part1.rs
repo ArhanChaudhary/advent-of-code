@@ -28,9 +28,9 @@ fn part1(input: &str) -> u32 {
                     }
                 }
             }
-            Some(i + 1)
+            Some(i as u32 + 1)
         })
-        .fold(0, |sum, x| sum + x as u32)
+        .sum()
 }
 
 #[cfg(test)]

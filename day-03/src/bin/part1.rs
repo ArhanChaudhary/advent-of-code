@@ -13,7 +13,7 @@ fn part1(input: &str) -> u32 {
             let mut chars = line.chars().enumerate();
             let mut line_sum = 0;
             loop {
-                let number_character_map = chars
+                let number_character_map: Vec<(char, bool)> = chars
                     .by_ref()
                     .skip_while(|(_, c)| !c.is_numeric())
                     .take_while(|(_, c)| c.is_numeric())
@@ -43,7 +43,7 @@ fn part1(input: &str) -> u32 {
                         }
                         (c, false)
                     })
-                    .collect::<Vec<(char, bool)>>();
+                    .collect();
                 if number_character_map.len() == 0 {
                     break;
                 }
