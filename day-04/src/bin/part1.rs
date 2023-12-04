@@ -5,7 +5,33 @@ fn main() {
 }
 
 fn part1(input: &str) -> u32 {
-    todo!();
+    input
+        .lines()
+        .filter_map(|line| {
+            let card_info: Vec<Vec<u32>> = line
+                .chars()
+                .skip_while(|c| *c != ':')
+                .skip(1)
+                .collect::<String>()
+                .split("|")
+                .map(|split| {
+                    split
+                        .split_whitespace()
+                        .map(|number| number.parse().unwrap())
+                        .collect()
+                })
+                .collect();
+            let match_count = card_info[1]
+                .iter()
+                .filter(|&have| card_info[0].contains(have))
+                .count() as u32;
+            if match_count == 0 {
+                None
+            } else {
+                Some(2u32.pow(match_count - 1))
+            }
+        })
+        .sum()
 }
 
 #[cfg(test)]
