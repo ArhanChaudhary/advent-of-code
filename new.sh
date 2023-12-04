@@ -7,7 +7,7 @@ function part1() {
     # add --cookie "session=$AOC_COOKIE" to access part 2
     BASE_CONTENTS=`curl "$BASE"`
     # we need to echo BASE_CONTENTS in quotes and do the strange \n stuff because \n is a line terminator so we do some weird workarounds
-    TEST_CASES=`echo "$BASE_CONTENTS" | tr '\n' '\r' | sed -e 's|.*<pre><code>\(.*\)\r</code></pre>.*|\1|' -e 's/\r/\n            /g'`
+    TEST_CASES=`echo "$BASE_CONTENTS" | tr '\n' '\r' | sed -e 's|.*<pre><code>\(.*\)\r</code></pre>.*|\1|' -e 's/\r/\n/g'`
     TEST_RESULT=`echo "$BASE_CONTENTS" | tr '\n' '\r' | sed -e 's|.*<code><em>\(.*\)</em></code>.*|\1|'`
     echo "fn main() {
     let input = include_str!(\"./input.txt\");
@@ -45,7 +45,7 @@ function part2() {
     BASE=`date +https://adventofcode.com/%Y/day/$1`;
     BASE_CONTENTS=`curl --cookie "session=$AOC_COOKIE" "$BASE"`;
     # we need to echo BASE_CONTENTS in quotes and do the strange \n stuff because \n is a line terminator so we do some weird workarounds
-    TEST_CASES=`echo "$BASE_CONTENTS" | tr '\n' '\r' | sed -e 's|.*<pre><code>\(.*\)\r</code></pre>.*|\1|' -e 's/\r/\r            /g'`
+    TEST_CASES=`echo "$BASE_CONTENTS" | tr '\n' '\r' | sed -e 's|.*<pre><code>\(.*\)\r</code></pre>.*|\1|'`
     TEST_RESULT=`echo "$BASE_CONTENTS" | tr '\n' '\r' | sed -e 's|.*<code><em>\(.*\)</em></code>.*|\1|'`
     cat $N/src/bin/part1.rs | sed -e 's/part1/part2/g' | tr '\n' '\r' | sed -E "s/(.+)part2\(\r +".+",\r +\);\r +assert_eq\!\(result, .+\);(.*)/\1part2(\r            \"$TEST_CASES\",\r        );\r        assert_eq!(result, $TEST_RESULT);\2/g" | tr '\r' '\n' > $N/src/bin/part2.rs
     unset N
