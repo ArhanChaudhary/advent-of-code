@@ -33,6 +33,7 @@ mod tests {
 }" > $N/src/bin/part1.rs;
     curl --cookie "session=$AOC_COOKIE" $BASE/input > $N/src/bin/input.txt
     cd $N
+    cargo build
     unset N
     unset BASE
     unset BASE_CONTENTS
