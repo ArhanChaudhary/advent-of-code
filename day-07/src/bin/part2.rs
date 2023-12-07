@@ -88,17 +88,17 @@ fn part2(input: &str) -> usize {
         .lines()
         .map(|line| {
             let mut split = line.split_whitespace();
-            let mut card_map: HashMap<Card, usize> = HashMap::new();
+            let mut card_counts: HashMap<Card, usize> = HashMap::new();
             let cards: [Card; 5] = split
                 .next()
                 .unwrap()
                 .chars()
                 .map(Card::from)
                 .fold(Vec::with_capacity(5), |mut collection, card| {
-                    if let Some(count) = card_map.get(&card) {
-                        card_map.insert(card, count + 1);
+                    if let Some(count) = card_counts.get(&card) {
+                        card_counts.insert(card, count + 1);
                     } else {
-                        card_map.insert(card, 1);
+                        card_counts.insert(card, 1);
                     }
                     collection.push(card);
                     collection
@@ -106,34 +106,33 @@ fn part2(input: &str) -> usize {
                 .try_into()
                 .unwrap();
             let bet = split.next().unwrap().parse::<usize>().unwrap();
-            let jokers = *card_map.get(JOKER_CARD).unwrap_or(&0);
-            card_map.remove(JOKER_CARD);
-            let mut card_map: Vec<usize> = card_map.values().cloned().collect();
-            card_map.sort();
-            if let Some(last_card_count) = card_map.last_mut() {
+            let jokers = card_counts.remove(JOKER_CARD).unwrap_or(0);
+            let mut card_counts: Vec<usize> = card_counts.into_values().collect();
+            card_counts.sort();
+            if let Some(last_card_count) = card_counts.last_mut() {
                 *last_card_count += jokers;
             } else {
-                card_map.push(5);
+                card_counts.push(5);
             }
-            let mut card_map = card_map.iter().cloned();
-            let hand_type = match card_map.next().unwrap() {
+            let mut sorted_card_counts = card_counts.into_iter();
+            let hand_type = match sorted_card_counts.next().unwrap() {
                 5 => HandType::FiveOfAKind,
                 2 => HandType::FullHouse,
-                1 => match card_map.next().unwrap() {
+                1 => match sorted_card_counts.next().unwrap() {
                     4 => HandType::FourOfAKind,
                     2 => HandType::TwoPair,
-                    1 => match card_map.next().unwrap() {
+                    1 => match sorted_card_counts.next().unwrap() {
                         3 => HandType::ThreeOfAKind,
-                        1 => match card_map.next().unwrap() {
+                        1 => match sorted_card_counts.next().unwrap() {
                             2 => HandType::OnePair,
                             1 => HandType::HighCard,
-                            _ => panic!(),
+                            _ => unreachable!(),
                         },
-                        _ => panic!(),
+                        _ => unreachable!(),
                     },
-                    _ => panic!(),
+                    _ => unreachable!(),
                 },
-                _ => panic!(),
+                _ => unreachable!(),
             };
             Hand {
                 bet,
@@ -148,11 +147,11 @@ fn part2(input: &str) -> usize {
                 .find_map(|(card1, card2)| match card1.partial_cmp(&card2) {
                     Some(Ordering::Equal) => None,
                     Some(ord) => Some(ord),
-                    None => panic!(),
+                    None => unreachable!(),
                 })
                 .unwrap(),
             Some(ord) => ord,
-            None => panic!(),
+            None => unreachable!(),
         },
     );
     hands
