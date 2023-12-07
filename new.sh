@@ -15,7 +15,7 @@ function part1() {
     dbg!(output);
 }
 
-fn part1(input: &str) -> u32 {
+fn part1(input: &str) -> usize {
     todo!();
 }
 
