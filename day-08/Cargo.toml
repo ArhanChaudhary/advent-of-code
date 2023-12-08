@@ -8,3 +8,11 @@ edition = "2021"
 [dependencies]
 itertools = "0.12.0"
 regex = "1.10.2"
+
+[profile.release]
+debug = 0
+strip = "symbols"
+debug-assertions = false
+panic = "abort"
+codegen-units = 1
+lto = true
