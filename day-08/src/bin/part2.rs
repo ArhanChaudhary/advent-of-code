@@ -41,20 +41,17 @@ fn part2(input: &str) -> usize {
     let mut unfound_cycles: Vec<String> = Vec::new();
     let mut location_map: HashMap<String, [String; 2]> = HashMap::new();
     for line in input_lines {
-        if let Some(captures) = Regex::new(r"(\w\w\w) = \((\w\w\w), (\w\w\w)\)")
+        let captures = Regex::new(r"(\w\w\w) = \((\w\w\w), (\w\w\w)\)")
             .unwrap()
             .captures(line)
-        {
-            if captures[1].chars().last().unwrap() == 'A' {
-                unfound_cycles.push(captures[1].to_string());
-            }
-            location_map.insert(
-                captures[1].to_string(),
-                [captures[2].to_string(), captures[3].to_string()],
-            );
-        } else {
-            unreachable!();
+            .unwrap();
+        if captures[1].chars().last().unwrap() == 'A' {
+            unfound_cycles.push(captures[1].to_string());
         }
+        location_map.insert(
+            captures[1].to_string(),
+            [captures[2].to_string(), captures[3].to_string()],
+        );
     }
     let mut directions = directions.chars().cycle();
     let mut cycles_counts: Vec<usize> = Vec::new();

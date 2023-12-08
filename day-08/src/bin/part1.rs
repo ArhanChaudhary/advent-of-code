@@ -14,17 +14,14 @@ fn part1(input: &str) -> usize {
     let directions = input_lines.next().unwrap();
     let mut location_map: HashMap<String, [String; 2]> = HashMap::new();
     for line in input_lines {
-        if let Some(captures) = Regex::new(r"(\w\w\w) = \((\w\w\w), (\w\w\w)\)")
+        let captures = Regex::new(r"(\w\w\w) = \((\w\w\w), (\w\w\w)\)")
             .unwrap()
             .captures(line)
-        {
-            location_map.insert(
-                captures[1].to_string(),
-                [captures[2].to_string(), captures[3].to_string()],
-            );
-        } else {
-            unreachable!();
-        }
+            .unwrap();
+        location_map.insert(
+            captures[1].to_string(),
+            [captures[2].to_string(), captures[3].to_string()],
+        );
     }
     directions
         .chars()
