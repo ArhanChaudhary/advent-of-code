@@ -4,8 +4,35 @@ fn main() {
     dbg!(output);
 }
 
+fn interpolate_next(points: Vec<isize>) -> f64 {
+    let at = points.len() as f64;
+    (0..points.len())
+        .map(|i| {
+            (0..points.len())
+                .map(|j| {
+                    if i == j {
+                        1.0
+                    } else {
+                        (at - j as f64) / (i as f64 - j as f64)
+                    }
+                })
+                .fold(points[i] as f64, |product, v| product * v)
+        })
+        .sum()
+}
+
 fn part1(input: &str) -> usize {
-    todo!();
+    input
+        .lines()
+        .map(|line| {
+            interpolate_next(
+                line.split_whitespace()
+                    .map(|c| c.parse::<isize>().unwrap())
+                    .collect(),
+            )
+        })
+        .sum::<f64>()
+        .round() as usize
 }
 
 #[cfg(test)]
@@ -15,11 +42,9 @@ mod tests {
     #[test]
     fn part1_test() {
         let result = part1(
-            "10  13  16  21  30  45  <em>68</em>
-   3   3   5   9  15  <em>23</em>
-     0   2   4   6   <em>8</em>
-       2   2   2   <em>2</em>
-         0   0   <em>0</em>",
+            "0 3 6 9 12 15
+1 3 6 10 15 21
+10 13 16 21 30 45",
         );
         assert_eq!(result, 114);
     }
