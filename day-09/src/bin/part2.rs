@@ -1,6 +1,6 @@
 fn main() {
     let input = include_str!("./input.txt");
-    let output = part1(input);
+    let output = part2(input);
     dbg!(output);
 }
 
@@ -21,7 +21,7 @@ fn interpolate_prev(points: Vec<isize>) -> f64 {
         .sum()
 }
 
-fn part1(input: &str) -> usize {
+fn part2(input: &str) -> usize {
     input
         .lines()
         .map(|line| {
@@ -40,8 +40,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn part1_test() {
-        let result = part1(
+    fn part2_test() {
+        let result = part2(
             "0 3 6 9 12 15
 1 3 6 10 15 21
 10 13 16 21 30 45",
