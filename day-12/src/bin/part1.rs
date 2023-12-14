@@ -4,74 +4,45 @@ fn main() {
     dbg!(output);
 }
 
-fn total_positions_recursion(
-    starting_from: usize,
-    space: String,
-    mut groups: Vec<usize>,
-) -> Vec<String> {
-    if groups.len() == 0 {
-        if space.chars().skip(starting_from).all(|c| c != '#') {
-            return vec![space];
-        } else {
-            return Vec::new();
-        }
-    }
-    let group = groups.pop().unwrap();
+fn total_positions(space: &str, groups: &[usize]) -> usize {
+    let group = groups[groups.len() - 1];
+    let groups = &groups[0..groups.len() - 1];
     space
         .chars()
-        .skip(starting_from)
         .take_while(|&c| c != '#')
-        .chain(
-            space
-                .chars()
-                .skip(starting_from)
-                .skip_while(|&c| c != '#')
-                .take(group),
-        )
+        .chain(space.chars().skip_while(|&c| c != '#').take(group))
         .collect::<Vec<char>>()
         .windows(group)
         .enumerate()
         .filter_map(|(i, window)| {
             if window.iter().any(|&c| c == '.') {
-                return None;
-            }
-            let i = i + starting_from;
-            let try_new_space: String = space
-                .char_indices()
-                .map(|(j, c)| {
-                    if (0..i as isize - 1).contains(&(j as isize)) {
-                        if c == '?' {
-                            Some('.')
-                        } else {
-                            Some(c)
-                        }
-                    } else if j as isize == i as isize - 1 || j == i + group {
-                        if c == '#' {
-                            None
-                        } else {
-                            Some('.')
-                        }
-                    } else if (i..i + group).contains(&j) {
-                        Some('#')
+                None
+            } else if i + group == space.len() {
+                if groups.len() == 0 {
+                    Some(1)
+                } else {
+                    None
+                }
+            } else if (i >= 1 && space.chars().nth(i - 1).unwrap() == '#')
+                || space.chars().nth(i + group).unwrap() == '#'
+            {
+                None
+            } else {
+                let try_new_space = &space[i + group + 1..];
+                if groups.len() == 0 {
+                    if try_new_space.chars().all(|c| c != '#') {
+                        Some(1)
                     } else {
-                        Some(c)
+                        None
                     }
-                })
-                .collect::<Option<String>>()?;
-            Some(total_positions_recursion(
-                i + group + 1,
-                try_new_space,
-                groups.clone(),
-            ))
+                } else {
+                    Some(total_positions(try_new_space, groups))
+                }
+            }
         })
-        .flatten()
-        .collect()
+        .sum()
 }
 
-fn total_positions(space: &str, mut groups: Vec<usize>) -> usize {
-    groups.reverse();
-    total_positions_recursion(0, space.to_string(), groups).len()
-}
 
 fn part1(input: &str) -> usize {
     input
@@ -83,9 +54,10 @@ fn part1(input: &str) -> usize {
                 split
                     .next()
                     .unwrap()
-                    .split(",")
+                    .rsplit(",")
                     .map(|c| c.parse::<usize>().unwrap())
-                    .collect::<Vec<usize>>(),
+                    .collect::<Vec<usize>>()
+                    .as_slice(),
             )
         })
         .sum()
