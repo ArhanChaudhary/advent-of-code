@@ -4,8 +4,20 @@ fn main() {
     dbg!(output);
 }
 
+fn hash(to_hash: &str) -> usize {
+    to_hash.chars().fold(0, |current_value, c| {
+        if c == '\n' {
+            return current_value;
+        }
+        let mut next_value = current_value + c as usize;
+        next_value *= 17;
+        next_value %= 256;
+        next_value
+    })
+}
+
 fn part1(input: &str) -> usize {
-    todo!();
+    input.split(",").map(|to_hash| hash(to_hash)).sum()
 }
 
 #[cfg(test)]
