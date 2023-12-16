@@ -47,36 +47,27 @@ fn move_light(light: Light, row_count: usize, col_count: usize) -> Option<Light>
     }
 }
 
-fn reflect_direction(direction: Direction, reflector: char) -> Vec<Direction> {
-    match direction {
-        Direction::Up => match reflector {
-            '|' => vec![Direction::Up],
-            '/' => vec![Direction::Right],
-            '\\' => vec![Direction::Left],
-            '-' => vec![Direction::Right, Direction::Left],
-            _ => unreachable!(),
-        },
-        Direction::Right => match reflector {
-            '-' => vec![Direction::Right],
-            '/' => vec![Direction::Up],
-            '\\' => vec![Direction::Down],
-            '|' => vec![Direction::Up, Direction::Down],
-            _ => unreachable!(),
-        },
-        Direction::Down => match reflector {
-            '|' => vec![Direction::Down],
-            '/' => vec![Direction::Left],
-            '\\' => vec![Direction::Right],
-            '-' => vec![Direction::Right, Direction::Left],
-            _ => unreachable!(),
-        },
-        Direction::Left => match reflector {
-            '-' => vec![Direction::Left],
-            '/' => vec![Direction::Down],
-            '\\' => vec![Direction::Up],
-            '|' => vec![Direction::Up, Direction::Down],
-            _ => unreachable!(),
-        },
+fn reflect_direction(direction: Direction, reflector: char) -> Box<dyn Iterator<Item = Direction>> {
+    match (direction, reflector) {
+        (Direction::Up, '|') | (Direction::Right, '/') | (Direction::Left, '\\') => {
+            Box::new(std::iter::once(Direction::Up))
+        }
+        (Direction::Up, '/') | (Direction::Right, '-') | (Direction::Down, '\\') => {
+            Box::new(std::iter::once(Direction::Right))
+        }
+        (Direction::Right, '\\') | (Direction::Down, '|') | (Direction::Left, '/') => {
+            Box::new(std::iter::once(Direction::Down))
+        }
+        (Direction::Up, '\\') | (Direction::Down, '/') | (Direction::Left, '-') => {
+            Box::new(std::iter::once(Direction::Left))
+        }
+        (Direction::Up, '-') | (Direction::Down, '-') => {
+            Box::new(std::iter::once(Direction::Right).chain(std::iter::once(Direction::Left)))
+        }
+        (Direction::Right, '|') | (Direction::Left, '|') => {
+            Box::new(std::iter::once(Direction::Up).chain(std::iter::once(Direction::Down)))
+        }
+        _ => unreachable!(),
     }
 }
 
@@ -98,20 +89,21 @@ fn part1(input: &str) -> usize {
     let mut grid: Vec<Vec<char>> = input.lines().map(|line| line.chars().collect()).collect();
     let row_count = grid.len();
     let col_count = grid[0].len();
-    let initial_directions: Vec<Direction> = if grid[0][0] == '.' {
+    let initial_directions = if grid[0][0] == '.' {
         grid[0][0] = '#';
-        vec![Direction::Right]
+        Box::new(std::iter::once(Direction::Right))
     } else {
         reflect_direction(Direction::Right, grid[0][0])
     };
-    let mut queue: VecDeque<Light> = VecDeque::new();
-    for initial_direction in initial_directions {
-        queue.push_front(Light {
-            row: 0,
-            col: 0,
-            direction: initial_direction,
-        });
-    }
+    let mut queue = VecDeque::from(
+        initial_directions
+            .map(|initial_direction| Light {
+                row: 0,
+                col: 0,
+                direction: initial_direction,
+            })
+            .collect::<Vec<Light>>(),
+    );
     let mut used_reflectors: Vec<ReflectorUsage> = Vec::new();
     while queue.len() != 0 {
         let current_light = queue.pop_front().unwrap();
@@ -127,9 +119,8 @@ fn part1(input: &str) -> usize {
             };
             if used_reflectors.contains(&reflector_usage) {
                 continue;
-            } else {
-                used_reflectors.push(reflector_usage);
             }
+            used_reflectors.push(reflector_usage);
             for reflected_direction in
                 reflect_direction(next_light.direction, grid[next_light.row][next_light.col])
             {

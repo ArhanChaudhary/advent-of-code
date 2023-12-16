@@ -47,36 +47,27 @@ fn move_light(light: Light, row_count: usize, col_count: usize) -> Option<Light>
     }
 }
 
-fn reflect_direction(direction: Direction, reflector: char) -> Vec<Direction> {
-    match direction {
-        Direction::Up => match reflector {
-            '|' => vec![Direction::Up],
-            '/' => vec![Direction::Right],
-            '\\' => vec![Direction::Left],
-            '-' => vec![Direction::Right, Direction::Left],
-            _ => unreachable!(),
-        },
-        Direction::Right => match reflector {
-            '-' => vec![Direction::Right],
-            '/' => vec![Direction::Up],
-            '\\' => vec![Direction::Down],
-            '|' => vec![Direction::Up, Direction::Down],
-            _ => unreachable!(),
-        },
-        Direction::Down => match reflector {
-            '|' => vec![Direction::Down],
-            '/' => vec![Direction::Left],
-            '\\' => vec![Direction::Right],
-            '-' => vec![Direction::Right, Direction::Left],
-            _ => unreachable!(),
-        },
-        Direction::Left => match reflector {
-            '-' => vec![Direction::Left],
-            '/' => vec![Direction::Down],
-            '\\' => vec![Direction::Up],
-            '|' => vec![Direction::Up, Direction::Down],
-            _ => unreachable!(),
-        },
+fn reflect_direction(direction: Direction, reflector: char) -> Box<dyn Iterator<Item = Direction>> {
+    match (direction, reflector) {
+        (Direction::Up, '|') | (Direction::Right, '/') | (Direction::Left, '\\') => {
+            Box::new(std::iter::once(Direction::Up))
+        }
+        (Direction::Up, '/') | (Direction::Right, '-') | (Direction::Down, '\\') => {
+            Box::new(std::iter::once(Direction::Right))
+        }
+        (Direction::Right, '\\') | (Direction::Down, '|') | (Direction::Left, '/') => {
+            Box::new(std::iter::once(Direction::Down))
+        }
+        (Direction::Up, '\\') | (Direction::Down, '/') | (Direction::Left, '-') => {
+            Box::new(std::iter::once(Direction::Left))
+        }
+        (Direction::Up, '-') | (Direction::Down, '-') => {
+            Box::new(std::iter::once(Direction::Right).chain(std::iter::once(Direction::Left)))
+        }
+        (Direction::Right, '|') | (Direction::Left, '|') => {
+            Box::new(std::iter::once(Direction::Up).chain(std::iter::once(Direction::Down)))
+        }
+        _ => unreachable!(),
     }
 }
 
@@ -96,18 +87,17 @@ struct ReflectorUsage {
 
 fn part2(input: &str) -> usize {
     let grid: Vec<Vec<char>> = input.lines().map(|line| line.chars().collect()).collect();
-    let mut sums: Vec<usize> = Vec::new();
     let row_count = grid.len();
     let col_count = grid[0].len();
-    sums.extend((0..col_count).map(|j| try_light_at(grid.clone(), 0, j, Direction::Down)));
-    sums.extend(
-        (0..row_count).map(|i| try_light_at(grid.clone(), i, col_count - 1, Direction::Left)),
-    );
-    sums.extend(
-        (0..col_count).map(|j| try_light_at(grid.clone(), row_count - 1, j, Direction::Up)),
-    );
-    sums.extend((0..row_count).map(|i| try_light_at(grid.clone(), i, 0, Direction::Right)));
-    sums.into_iter().max().unwrap()
+    (0..col_count)
+        .map(|j| try_light_at(grid.clone(), 0, j, Direction::Down))
+        .chain(
+            (0..row_count).map(|i| try_light_at(grid.clone(), i, col_count - 1, Direction::Left)),
+        )
+        .chain((0..col_count).map(|j| try_light_at(grid.clone(), row_count - 1, j, Direction::Up)))
+        .chain((0..row_count).map(|i| try_light_at(grid.clone(), i, 0, Direction::Right)))
+        .max()
+        .unwrap()
 }
 
 fn try_light_at(
@@ -118,20 +108,21 @@ fn try_light_at(
 ) -> usize {
     let row_count = grid.len();
     let col_count = grid[0].len();
-    let initial_directions: Vec<Direction> = if grid[row][col] == '.' {
+    let initial_directions = if grid[row][col] == '.' {
         grid[row][col] = '#';
-        vec![initial_direction]
+        Box::new(std::iter::once(initial_direction))
     } else {
         reflect_direction(initial_direction, grid[row][col])
     };
-    let mut queue: VecDeque<Light> = VecDeque::new();
-    for initial_direction in initial_directions {
-        queue.push_front(Light {
-            row,
-            col,
-            direction: initial_direction,
-        });
-    }
+    let mut queue = VecDeque::from(
+        initial_directions
+            .map(|initial_direction| Light {
+                row,
+                col,
+                direction: initial_direction,
+            })
+            .collect::<Vec<Light>>(),
+    );
     let mut used_reflectors: Vec<ReflectorUsage> = Vec::new();
     while queue.len() != 0 {
         let current_light = queue.pop_front().unwrap();
@@ -147,9 +138,8 @@ fn try_light_at(
             };
             if used_reflectors.contains(&reflector_usage) {
                 continue;
-            } else {
-                used_reflectors.push(reflector_usage);
             }
+            used_reflectors.push(reflector_usage);
             for reflected_direction in
                 reflect_direction(next_light.direction, grid[next_light.row][next_light.col])
             {
