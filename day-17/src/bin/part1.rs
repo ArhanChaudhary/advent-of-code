@@ -1,6 +1,6 @@
 use std::{
     cmp::Ordering,
-    collections::{BinaryHeap, HashMap, HashSet},
+    collections::{BinaryHeap, HashSet},
 };
 
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -67,17 +67,17 @@ impl Node {
 impl<'a> Visit<'a> {
     fn neighbors(&self, grid: &'a Grid) -> Vec<(&'a Node, Direction)> {
         match self.from {
-            Some(root_from) => match root_from.0 {
+            Some((root_from_direction, root_from_direction_streak)) => match root_from_direction {
                 Direction::Up | Direction::Down => [Direction::Right, Direction::Left],
                 Direction::Right | Direction::Left => [Direction::Up, Direction::Down],
             }
             .into_iter()
             .map(|neighbor_direction| self.node.neighbor(neighbor_direction, grid))
             .chain(std::iter::once({
-                if root_from.1 >= 3 {
+                if root_from_direction_streak >= 3 {
                     None
                 } else {
-                    self.node.neighbor(root_from.0, grid)
+                    self.node.neighbor(root_from_direction, grid)
                 }
             }))
             .flatten()
@@ -115,11 +115,9 @@ impl PartialEq for Visit<'_> {
 }
 
 fn dijkstra<'a>(start: &'a Node, goal: &'a Node, grid: &'a Grid) -> usize {
-    let mut distances = HashMap::new();
     let mut visited = HashSet::new();
     let mut unvisited_nodes = BinaryHeap::new();
 
-    distances.insert(start, 0);
     unvisited_nodes.push(Visit {
         from: None,
         node: &start,
@@ -138,24 +136,21 @@ fn dijkstra<'a>(start: &'a Node, goal: &'a Node, grid: &'a Grid) -> usize {
 
         for (neighbor, neighbor_direction) in visiting.neighbors(grid) {
             let new_distance = visiting.distance + neighbor.to_cost;
-            let direction_streak = visiting.from.map_or(1, |from| {
-                if neighbor_direction != from.0 {
-                    1
-                } else {
-                    from.1 + 1
-                }
-            });
+            let direction_streak =
+                visiting
+                    .from
+                    .map_or(1, |(from_direction, from_direction_streak)| {
+                        if neighbor_direction != from_direction {
+                            1
+                        } else {
+                            from_direction_streak + 1
+                        }
+                    });
             unvisited_nodes.push(Visit {
                 from: Some((neighbor_direction, direction_streak)),
                 node: neighbor,
                 distance: new_distance,
             });
-            if distances
-                .get(&neighbor)
-                .map_or(true, |&current| new_distance < current)
-            {
-                distances.insert(neighbor, new_distance);
-            }
         }
     }
 }
