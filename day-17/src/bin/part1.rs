@@ -1,11 +1,187 @@
+use std::{
+    cmp::Ordering,
+    collections::{BinaryHeap, HashMap, HashSet},
+};
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+struct Node {
+    to_cost: usize,
+    row: usize,
+    col: usize,
+}
+
+#[derive(Eq, Clone, Hash)]
+struct Visit<'a> {
+    node: &'a Node,
+    from: Option<(Direction, usize)>,
+    distance: usize,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+enum Direction {
+    Up,
+    Right,
+    Down,
+    Left,
+}
+
+type Grid = Vec<Vec<Node>>;
+
+impl Node {
+    fn neighbor<'a>(&self, direction: Direction, grid: &'a Grid) -> Option<(&'a Node, Direction)> {
+        let row_count = grid.len();
+        let col_count = grid[0].len();
+        match direction {
+            Direction::Up => {
+                if self.row == 0 {
+                    None
+                } else {
+                    Some((&grid[self.row - 1][self.col], direction))
+                }
+            }
+            Direction::Right => {
+                if self.col == col_count - 1 {
+                    None
+                } else {
+                    Some((&grid[self.row][self.col + 1], direction))
+                }
+            }
+            Direction::Down => {
+                if self.row == row_count - 1 {
+                    None
+                } else {
+                    Some((&grid[self.row + 1][self.col], direction))
+                }
+            }
+            Direction::Left => {
+                if self.col == 0 {
+                    None
+                } else {
+                    Some((&grid[self.row][self.col - 1], direction))
+                }
+            }
+        }
+    }
+}
+
+impl<'a> Visit<'a> {
+    fn neighbors(&self, grid: &'a Grid) -> Vec<(&'a Node, Direction)> {
+        match self.from {
+            Some(root_from) => match root_from.0 {
+                Direction::Up | Direction::Down => [Direction::Right, Direction::Left],
+                Direction::Right | Direction::Left => [Direction::Up, Direction::Down],
+            }
+            .into_iter()
+            .map(|neighbor_direction| self.node.neighbor(neighbor_direction, grid))
+            .chain(std::iter::once({
+                if root_from.1 >= 3 {
+                    None
+                } else {
+                    self.node.neighbor(root_from.0, grid)
+                }
+            }))
+            .flatten()
+            .collect(),
+            None => [
+                Direction::Up,
+                Direction::Right,
+                Direction::Down,
+                Direction::Left,
+            ]
+            .into_iter()
+            .map(|neighbor_direction| self.node.neighbor(neighbor_direction, grid))
+            .flatten()
+            .collect(),
+        }
+    }
+}
+
+impl Ord for Visit<'_> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.distance.cmp(&self.distance)
+    }
+}
+
+impl PartialOrd for Visit<'_> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl PartialEq for Visit<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.distance.eq(&other.distance)
+    }
+}
+
+fn dijkstra<'a>(start: &'a Node, goal: &'a Node, grid: &'a Grid) -> usize {
+    let mut distances = HashMap::new();
+    let mut visited = HashSet::new();
+    let mut unvisited_nodes = BinaryHeap::new();
+
+    distances.insert(start, 0);
+    unvisited_nodes.push(Visit {
+        from: None,
+        node: &start,
+        distance: 0,
+    });
+
+    loop {
+        let visiting = unvisited_nodes.pop().unwrap();
+        if !visited.insert((visiting.node, visiting.from)) {
+            continue;
+        }
+
+        if visiting.node == goal {
+            break visiting.distance;
+        }
+
+        for (neighbor, neighbor_direction) in visiting.neighbors(grid) {
+            let new_distance = visiting.distance + neighbor.to_cost;
+            let direction_streak = visiting.from.map_or(1, |from| {
+                if neighbor_direction != from.0 {
+                    1
+                } else {
+                    from.1 + 1
+                }
+            });
+            unvisited_nodes.push(Visit {
+                from: Some((neighbor_direction, direction_streak)),
+                node: neighbor,
+                distance: new_distance,
+            });
+            if distances
+                .get(&neighbor)
+                .map_or(true, |&current| new_distance < current)
+            {
+                distances.insert(neighbor, new_distance);
+            }
+        }
+    }
+}
+
+fn part1(input: &str) -> usize {
+    let grid: Grid = input
+        .lines()
+        .enumerate()
+        .map(|(i, line)| {
+            line.chars()
+                .enumerate()
+                .map(move |(j, c)| Node {
+                    row: i,
+                    col: j,
+                    to_cost: c.to_digit(10).unwrap() as usize,
+                })
+                .collect()
+        })
+        .collect();
+    dijkstra(&grid[0][0], grid.last().unwrap().last().unwrap(), &grid)
+}
+
 fn main() {
     let input = include_str!("./input.txt");
     let output = part1(input);
     dbg!(output);
-}
-
-fn part1(input: &str) -> usize {
-    todo!();
 }
 
 #[cfg(test)]
