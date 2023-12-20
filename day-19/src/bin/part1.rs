@@ -108,18 +108,21 @@ impl Part {
 
 fn part1(input: &str) -> usize {
     let mut input_split = input.split("\n\n");
-    let mut workflows: Vec<Workflow> = Vec::new();
-    let mut raw_rules: Vec<String> = Vec::new();
-    for line in input_split.next().unwrap().lines() {
-        let mut line_chars = line.chars();
-        let workflow = Workflow {
-            name: line_chars.by_ref().take_while(|&c| c != '{').collect(),
-            rules: RefCell::from(Vec::new()),
-        };
-        let raw_rule = line_chars.take_while(|&c| c != '}').collect();
-        workflows.push(workflow);
-        raw_rules.push(raw_rule);
-    }
+    let (workflows, raw_rules): (Vec<Workflow>, Vec<String>) = input_split
+        .next()
+        .unwrap()
+        .lines()
+        .map(|line| {
+            let mut line_chars = line.chars();
+            (
+                Workflow {
+                    name: line_chars.by_ref().take_while(|&c| c != '{').collect(),
+                    rules: RefCell::from(Vec::new()),
+                },
+                line_chars.take_while(|&c| c != '}').collect(),
+            )
+        })
+        .unzip();
     let root_workflow = workflows
         .iter()
         .find(|workflow| workflow.name == "in")
