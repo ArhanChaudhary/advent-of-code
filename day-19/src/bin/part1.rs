@@ -10,13 +10,14 @@ struct Workflow<'a> {
 
 impl<'a> Workflow<'a> {
     fn add_rule(&self, rule: Rule<'a>) {
-        self.rules.borrow_mut().insert(0, rule);
+        self.rules.borrow_mut().push(rule);
     }
 
     fn to_dest(&self, part: &Part) -> Destination<'a> {
         self.rules
             .borrow()
             .iter()
+            .rev()
             .find_map(|rule| {
                 if rule.matches(part) {
                     Some(rule.destination)
