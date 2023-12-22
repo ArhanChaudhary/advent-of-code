@@ -23,28 +23,23 @@ fn part1(input: &str) -> u32 {
                                 if i as i32 + dy < 0 {
                                     continue;
                                 }
-                                match input_lines.get((i as i32 + dy) as usize) {
-                                    Some(&line_check) => {
-                                        if j as i32 + dx < 0 {
-                                            continue;
-                                        }
-                                        match line_check.chars().nth((j as i32 + dx) as usize) {
-                                            Some(c_check) => {
-                                                if !c_check.is_numeric() && c_check != '.' {
-                                                    return (c, true);
-                                                }
-                                            }
-                                            None => (),
+
+                                if let Some(&line_check) = input_lines.get((i as i32 + dy) as usize) {
+                                    if j as i32 + dx < 0 {
+                                        continue;
+                                    }
+                                    if let Some(c_check) = line_check.chars().nth((j as i32 + dx) as usize) {
+                                        if !c_check.is_numeric() && c_check != '.' {
+                                            return (c, true);
                                         }
                                     }
-                                    None => (),
                                 }
                             }
                         }
                         (c, false)
                     })
                     .collect();
-                if number_character_map.len() == 0 {
+                if number_character_map.is_empty() {
                     break;
                 }
                 if number_character_map.iter().any(|(_, b)| *b) {

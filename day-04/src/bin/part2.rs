@@ -13,7 +13,7 @@ fn part2(input: &str) -> u32 {
                 .skip_while(|c| *c != ':')
                 .skip(1)
                 .collect::<String>()
-                .split("|")
+                .split('|')
                 .map(|split| {
                     split
                         .split_whitespace()
@@ -29,8 +29,8 @@ fn part2(input: &str) -> u32 {
         .collect();
     let mut queue: Vec<usize> = (0..card_matches.len()).collect();
     let mut scratchcards: u32 = card_matches.len() as u32;
-    while queue.len() != 0 {
-        let curr = queue.pop().unwrap();
+    while let Some(curr) = queue.pop() {
+        
         scratchcards += card_matches[curr] as u32;
         for next in curr + 1..=curr + card_matches[curr] {
             queue.push(next);

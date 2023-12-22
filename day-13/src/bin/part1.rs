@@ -16,7 +16,7 @@ fn find_reflection_index(pattern: &Vec<String>) -> Option<usize> {
                 return None;
             }
             let mut check_line_index = 0;
-            return loop {
+            loop {
                 let before = i as isize - check_line_index as isize;
                 let after = i + check_line_index + 1;
                 if before == -1 || after == pattern.len() {

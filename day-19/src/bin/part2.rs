@@ -110,7 +110,7 @@ impl PartRange {
         destination_part_range
     }
 
-    fn accepted_count(mut self, root_workflow: &Workflow, workflows: &[Workflow]) -> usize {
+    fn accepted_count(mut self, root_workflow: &Workflow) -> usize {
         let mut ret = 0;
         for rule in root_workflow.rules.borrow().iter().rev() {
             let destination_part_range = self.apply_rule(rule);
@@ -118,7 +118,7 @@ impl PartRange {
                 Destination::A => destination_part_range.covers_count(),
                 Destination::R => 0,
                 Destination::Workflow(destination_workflow) => {
-                    destination_part_range.accepted_count(destination_workflow, workflows)
+                    destination_part_range.accepted_count(destination_workflow)
                 }
             }
         }
@@ -143,7 +143,7 @@ impl Interval {
 fn part2(input: &str) -> usize {
     let (workflows, raw_rules): (Vec<Workflow>, Vec<String>) = input
         .lines()
-        .take_while(|&line| line != "")
+        .take_while(|&line| !line.is_empty())
         .map(|line| {
             let mut line_chars = line.chars();
             (
@@ -192,7 +192,7 @@ fn part2(input: &str) -> usize {
         .iter()
         .find(|workflow| workflow.name == "in")
         .unwrap();
-    PartRange::from(1, 4000).accepted_count(root_workflow, &workflows)
+    PartRange::from(1, 4000).accepted_count(root_workflow)
 }
 
 fn main() {

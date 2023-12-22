@@ -28,7 +28,7 @@ fn part1(input: &str) -> usize {
         .cycle()
         .fold_while((0, "AAA"), |(count, source), c| {
             if source == "ZZZ" {
-                return Done((count, &source));
+                return Done((count, source));
             }
             let dest = location_map.get(source).unwrap();
             if c == 'R' {

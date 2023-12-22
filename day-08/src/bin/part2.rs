@@ -11,9 +11,7 @@ fn gcd(a: usize, b: usize) -> usize {
     let mut max = a;
     let mut min = b;
     if min > max {
-        let val = max;
-        max = min;
-        min = val;
+        std::mem::swap(&mut max, &mut min);
     }
 
     loop {
@@ -32,7 +30,7 @@ fn lcm(a: usize, b: usize) -> usize {
 }
 
 fn lcmm(nums: Vec<usize>) -> usize {
-    nums.into_iter().reduce(|acc, a| lcm(acc, a)).unwrap()
+    nums.into_iter().reduce(lcm).unwrap()
 }
 
 fn part2(input: &str) -> usize {
@@ -45,7 +43,7 @@ fn part2(input: &str) -> usize {
             .unwrap()
             .captures(line)
             .unwrap();
-        if captures[1].chars().last().unwrap() == 'A' {
+        if captures[1].ends_with('A') {
             unfound_cycles.push(captures[1].to_string());
         }
         location_map.insert(
@@ -56,10 +54,10 @@ fn part2(input: &str) -> usize {
     let mut directions = directions.chars().cycle();
     let mut cycles_counts: Vec<usize> = Vec::new();
     let mut cycle_counter = 0;
-    while unfound_cycles.len() != 0 {
+    while !unfound_cycles.is_empty() {
         let direction = directions.next().unwrap();
         unfound_cycles.retain_mut(|cycle| {
-            if cycle.chars().last().unwrap() == 'Z' {
+            if cycle.ends_with('Z') {
                 cycles_counts.push(cycle_counter);
                 return false;
             }

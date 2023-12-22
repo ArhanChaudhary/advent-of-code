@@ -26,7 +26,7 @@ fn total_positions(space: String, groups: Vec<usize>) -> usize {
             if window.iter().any(|&c| c == '.') {
                 None
             } else if i + group == space.len() {
-                if groups.len() == 0 {
+                if groups.is_empty() {
                     Some(1)
                 } else {
                     None
@@ -37,7 +37,7 @@ fn total_positions(space: String, groups: Vec<usize>) -> usize {
                 None
             } else {
                 let try_new_space = &space[i + group + 1..];
-                if groups.len() == 0 {
+                if groups.is_empty() {
                     if try_new_space.chars().all(|c| c != '#') {
                         Some(1)
                     } else {
@@ -63,7 +63,7 @@ fn part2(input: &str) -> usize {
                 split
                     .next()
                     .unwrap()
-                    .rsplit(",")
+                    .rsplit(',')
                     .map(|c| c.parse::<usize>().unwrap()),
             )
             .take(5)

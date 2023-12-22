@@ -17,7 +17,7 @@ fn part1(input: &str) -> u32 {
                 .split("; ")
             {
                 for cube_info in subset.split(", ") {
-                    let cube_info: Vec<&str> = cube_info.split(" ").collect();
+                    let cube_info: Vec<&str> = cube_info.split(' ').collect();
                     let cube_type = cube_info[1];
                     let cube_count = cube_info[0].parse::<u32>().unwrap();
                     if cube_type == "red" && cube_count > 12

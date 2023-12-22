@@ -38,7 +38,7 @@ fn part1(input: &str) -> u32 {
             } as u32;
             x1 - x2 + 1
         })
-        .fold(1, |sum, x| sum * x)
+        .product()
 }
 
 #[cfg(test)]

@@ -49,8 +49,7 @@ fn part1(input: &str) -> usize {
             .0;
             curr_y * (prev_x - next_x)
         })
-        .sum::<isize>()
-        .abs() as usize
+        .sum::<isize>().unsigned_abs()
         / 2;
     // A = i + b/2 - 1
     // i = A - b/2 + 1

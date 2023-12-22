@@ -123,7 +123,7 @@ fn part2(input: &str) -> usize {
     .find_map(|try_index_in_loop| {
         let mut queue = VecDeque::from([try_index_in_loop]);
         let mut flooded_input_chars = input_chars.clone();
-        while queue.len() != 0 {
+        while !queue.is_empty() {
             let i = queue.pop_front().unwrap() as isize;
             for new_i in [
                 i - line_length as isize,

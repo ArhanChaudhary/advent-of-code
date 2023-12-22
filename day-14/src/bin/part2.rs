@@ -13,7 +13,7 @@ fn spin_cycle(grid: &mut Grid) {
                 continue;
             }
             let mut k = i;
-            while k as isize - 1 >= 0 && grid[k - 1][j] == '.' {
+            while k as isize > 0 && grid[k - 1][j] == '.' {
                 grid[k - 1][j] = 'O';
                 grid[k][j] = '.';
                 k -= 1;
@@ -21,15 +21,15 @@ fn spin_cycle(grid: &mut Grid) {
         }
     }
 
-    for i in 0..row_count {
+    for row in grid.iter_mut().take(row_count) {
         for j in 0..col_count {
-            if grid[i][j] != 'O' {
+            if row[j] != 'O' {
                 continue;
             }
             let mut k = j;
-            while k as isize - 1 >= 0 && grid[i][k - 1] == '.' {
-                grid[i][k - 1] = 'O';
-                grid[i][k] = '.';
+            while k as isize > 0 && row[k - 1] == '.' {
+                row[k - 1] = 'O';
+                row[k] = '.';
                 k -= 1;
             }
         }
@@ -49,15 +49,15 @@ fn spin_cycle(grid: &mut Grid) {
         }
     }
 
-    for i in 0..row_count {
+    for row in grid.iter_mut().take(row_count) {
         for j in (0..col_count).rev() {
-            if grid[i][j] != 'O' {
+            if row[j] != 'O' {
                 continue;
             }
             let mut k = j;
-            while k + 1 < col_count && grid[i][k + 1] == '.' {
-                grid[i][k + 1] = 'O';
-                grid[i][k] = '.';
+            while k + 1 < col_count && row[k + 1] == '.' {
+                row[k + 1] = 'O';
+                row[k] = '.';
                 k += 1;
             }
         }

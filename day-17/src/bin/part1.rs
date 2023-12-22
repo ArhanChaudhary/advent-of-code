@@ -89,8 +89,7 @@ impl<'a> Visit<'a> {
                 Direction::Left,
             ]
             .into_iter()
-            .map(|neighbor_direction| self.node.neighbor(neighbor_direction, grid))
-            .flatten()
+            .filter_map(|neighbor_direction| self.node.neighbor(neighbor_direction, grid))
             .collect(),
         }
     }
@@ -120,7 +119,7 @@ fn dijkstra<'a>(start: &'a Node, goal: &'a Node, grid: &'a Grid) -> usize {
 
     unvisited_nodes.push(Visit {
         from: None,
-        node: &start,
+        node: start,
         distance: 0,
     });
 

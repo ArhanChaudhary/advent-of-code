@@ -34,7 +34,7 @@ fn part2(input: &str) -> u32 {
                     (c, None)
                 })
                 .collect::<Vec<(char, Option<(u32, u32)>)>>();
-            if character_to_gear_position_maps.len() == 0 {
+            if character_to_gear_position_maps.is_empty() {
                 break;
             }
             if let Some(gear_position) = character_to_gear_position_maps
@@ -65,7 +65,7 @@ fn part2(input: &str) -> u32 {
             if numbers.len() == 1 {
                 None
             } else {
-                Some(numbers.iter().fold(1, |product, number| product * number))
+                Some(numbers.iter().product::<u32>())
             }
         })
         .sum()

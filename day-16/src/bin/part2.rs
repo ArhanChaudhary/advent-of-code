@@ -124,9 +124,11 @@ fn try_light_at(
             .collect::<Vec<Light>>(),
     );
     let mut used_reflectors: Vec<ReflectorUsage> = Vec::new();
-    while queue.len() != 0 {
+    while !queue.is_empty() {
         let current_light = queue.pop_front().unwrap();
-        let Some(next_light) = move_light(current_light, row_count, col_count) else { continue };
+        let Some(next_light) = move_light(current_light, row_count, col_count) else {
+            continue;
+        };
         if matches!(grid[next_light.row][next_light.col], '#' | '.') {
             queue.push_back(next_light);
             grid[next_light.row][next_light.col] = '#';

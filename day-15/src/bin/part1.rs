@@ -17,7 +17,7 @@ fn hash(to_hash: &str) -> usize {
 }
 
 fn part1(input: &str) -> usize {
-    input.split(",").map(|to_hash| hash(to_hash)).sum()
+    input.split(',').map(hash).sum()
 }
 
 #[cfg(test)]

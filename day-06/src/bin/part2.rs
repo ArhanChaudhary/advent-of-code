@@ -9,7 +9,7 @@ fn part2(input: &str) -> usize {
         .lines()
         .map(|line| {
             line.chars()
-                .filter(|c| c.is_digit(10))
+                .filter(|c| c.is_ascii_digit())
                 .collect::<String>()
                 .parse::<usize>()
                 .unwrap()

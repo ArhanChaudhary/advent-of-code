@@ -10,7 +10,7 @@ struct Pipe {
 }
 
 impl Pipe {
-    fn from_next_index(&self, index_offset: isize) -> Pipe {
+    fn to_next_index(&self, index_offset: isize) -> Pipe {
         Pipe {
             index: (self.index as isize + index_offset) as usize,
             prev_index: self.index,
@@ -47,9 +47,9 @@ fn part1(input: &str) -> usize {
                         .unwrap(),
                     '|' | 'F' | '7'
                 ) {
-                    curr.from_next_index(-line_length)
+                    curr.to_next_index(-line_length)
                 } else if matches!(input.chars().nth(curr.index + 1).unwrap(), '-' | 'J' | '7') {
-                    curr.from_next_index(1)
+                    curr.to_next_index(1)
                 } else if matches!(
                     input
                         .chars()
@@ -57,9 +57,9 @@ fn part1(input: &str) -> usize {
                         .unwrap(),
                     '|' | 'L' | 'J'
                 ) {
-                    curr.from_next_index(line_length)
+                    curr.to_next_index(line_length)
                 } else if matches!(input.chars().nth(curr.index - 1).unwrap(), '-' | 'L' | 'F') {
-                    curr.from_next_index(-1)
+                    curr.to_next_index(-1)
                 } else {
                     unreachable!();
                 }
@@ -67,36 +67,36 @@ fn part1(input: &str) -> usize {
             1 => {
                 // came from left
                 match curr_tile {
-                    '-' => curr.from_next_index(1),
-                    'J' => curr.from_next_index(-line_length),
-                    '7' => curr.from_next_index(line_length),
+                    '-' => curr.to_next_index(1),
+                    'J' => curr.to_next_index(-line_length),
+                    '7' => curr.to_next_index(line_length),
                     _ => unreachable!(),
                 }
             }
             diff if diff == line_length => {
                 // came from up
                 match curr_tile {
-                    '|' => curr.from_next_index(line_length),
-                    'L' => curr.from_next_index(1),
-                    'J' => curr.from_next_index(-1),
+                    '|' => curr.to_next_index(line_length),
+                    'L' => curr.to_next_index(1),
+                    'J' => curr.to_next_index(-1),
                     _ => unreachable!(),
                 }
             }
             -1 => {
                 // came from right
                 match curr_tile {
-                    '-' => curr.from_next_index(-1),
-                    'F' => curr.from_next_index(line_length),
-                    'L' => curr.from_next_index(-line_length),
+                    '-' => curr.to_next_index(-1),
+                    'F' => curr.to_next_index(line_length),
+                    'L' => curr.to_next_index(-line_length),
                     _ => unreachable!(),
                 }
             }
             diff if diff == -line_length => {
                 // came from down
                 match curr_tile {
-                    '|' => curr.from_next_index(-line_length),
-                    'F' => curr.from_next_index(1),
-                    '7' => curr.from_next_index(-1),
+                    '|' => curr.to_next_index(-line_length),
+                    'F' => curr.to_next_index(1),
+                    '7' => curr.to_next_index(-1),
                     _ => unreachable!(),
                 }
             }

@@ -23,7 +23,7 @@ struct Lens(String, usize);
 
 fn part2(input: &str) -> usize {
     let mut boxes: [Vec<Lens>; 256] = std::array::from_fn(|_| Vec::new());
-    for step in input.split(",") {
+    for step in input.split(',') {
         let mut chars = step.chars();
         let lens_label = chars
             .take_while_ref(|c| c.is_alphabetic())

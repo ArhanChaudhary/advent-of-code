@@ -57,7 +57,7 @@ fn part2(input: &str) -> usize {
         let _ = input_lines.by_ref().next();
         let mut mapping: Vec<[Interval; 2]> = input_lines
             .by_ref()
-            .take_while(|&line| line != "")
+            .take_while(|&line| !line.is_empty())
             .map(|line| {
                 let line_numbers: Vec<usize> = line
                     .split_whitespace()
@@ -69,7 +69,7 @@ fn part2(input: &str) -> usize {
                 ]
             })
             .collect();
-        if mapping.len() == 0 {
+        if mapping.is_empty() {
             break;
         }
         mapping.sort_by(|r, r2| r[1].start().cmp(&r2[1].start()));

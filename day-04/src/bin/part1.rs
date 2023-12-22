@@ -13,7 +13,7 @@ fn part1(input: &str) -> u32 {
                 .skip_while(|c| *c != ':')
                 .skip(1)
                 .collect::<String>()
-                .split("|")
+                .split('|')
                 .map(|split| {
                     split
                         .split_whitespace()
