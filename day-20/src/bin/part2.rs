@@ -1,6 +1,7 @@
 use std::cell::RefCell;
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 use std::rc::Rc;
+use utils::lcmm;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 enum SignalType {
@@ -9,7 +10,6 @@ enum SignalType {
 }
 
 struct SignalResult {
-    signal_count: usize,
     signal_type: SignalType,
     to_queue: Vec<ModuleRef>,
 }
@@ -130,7 +130,6 @@ fn send_signal(module: ModuleRef) -> Option<SignalResult> {
         }
     };
     let module_destinations = module.destinations().unwrap();
-    let signal_count = module_destinations.len();
     let to_queue = if signal_type == SignalType::High {
         module_destinations
             .iter()
@@ -147,15 +146,17 @@ fn send_signal(module: ModuleRef) -> Option<SignalResult> {
     };
     module.emitting = signal_type;
     Some(SignalResult {
-        signal_count,
         signal_type,
         to_queue,
     })
 }
 
-fn part1(input: &str) -> usize {
+const TARGET_MODULE_NAME: &str = "rx";
+
+fn part2(input: &str) -> usize {
     let mut broadcaster: Option<ModuleRef> = None;
     let mut modules: Vec<ModuleRef> = Vec::new();
+    let mut before_target_destination_module: Option<ModuleRef> = None;
     for line in input.lines() {
         let mut split = line.split(" -> ");
         let mut module_name = split.next().unwrap();
@@ -169,12 +170,14 @@ fn part1(input: &str) -> usize {
         if !is_broadcaster {
             module_name = &module_name[1..];
         }
-        let destination_names = split
-            .next()
-            .unwrap()
-            .split(", ")
-            .map(String::from)
-            .collect();
+        let mut has_target_destination = false;
+        let mut destination_names = Vec::new();
+        for destination_name in split.next().unwrap().split(", ").map(String::from) {
+            if destination_name == TARGET_MODULE_NAME {
+                has_target_destination = true;
+            }
+            destination_names.push(destination_name);
+        }
         let module = Rc::new(RefCell::new(Module::new(
             module_name.to_owned(),
             Some(module_type),
@@ -183,8 +186,15 @@ fn part1(input: &str) -> usize {
         if is_broadcaster {
             broadcaster = Some(module.clone());
         }
+        if has_target_destination {
+            before_target_destination_module = Some(module.clone());
+        }
         modules.push(module);
     }
+
+    let broadcaster = broadcaster.unwrap();
+    let before_target_destination_module = before_target_destination_module.unwrap();
+    let mut before_target_cycle_lengths: HashMap<String, Option<usize>> = HashMap::new();
     for module in modules.iter() {
         let mut destination_refs: Vec<ModuleRef> = Vec::new();
         for destination_name in module.borrow().destination_names().unwrap() {
@@ -210,14 +220,23 @@ fn part1(input: &str) -> usize {
                 conjunction.add_signal_sender(module.clone());
             }
             destination_refs.push(module_destination);
+            if destination_name == &before_target_destination_module.borrow().name {
+                before_target_cycle_lengths.insert(module.borrow().name.clone(), None);
+            }
         }
         module.borrow_mut().destinations = Some(ModuleDestinations::ModuleRefs(destination_refs));
     }
-    let broadcaster = broadcaster.unwrap();
-    let mut low_count = 0;
-    let mut high_count = 0;
-    for _ in 0..1000 {
-        low_count += 1;
+
+    let mut button_presses = 0;
+    loop {
+        if let Some(all_cycle_lengths) = before_target_cycle_lengths
+            .iter()
+            .map(|(_, &cycle_length)| cycle_length)
+            .collect::<Option<Vec<usize>>>()
+        {
+            break lcmm(all_cycle_lengths);
+        }
+        button_presses += 1;
         let mut module_signal_queue: VecDeque<ModuleRef> = VecDeque::from([broadcaster.clone()]);
         loop {
             let Some(to_signal) = module_signal_queue.pop_front() else {
@@ -226,23 +245,23 @@ fn part1(input: &str) -> usize {
             let Some(signal_result) = send_signal(to_signal.clone()) else {
                 continue;
             };
-            match signal_result.signal_type {
-                SignalType::High => {
-                    high_count += signal_result.signal_count;
+            for module in signal_result.to_queue {
+                if signal_result.signal_type == SignalType::High {
+                    if let Some(cycle_count) =
+                        before_target_cycle_lengths.get_mut(&to_signal.borrow().name)
+                    {
+                        *cycle_count = Some(button_presses);
+                    }
                 }
-                SignalType::Low => {
-                    low_count += signal_result.signal_count;
-                }
+                module_signal_queue.push_back(module);
             }
-            module_signal_queue.extend(signal_result.to_queue);
         }
     }
-    low_count * high_count
 }
 
 fn main() {
     let input = include_str!("./input.txt");
-    let output = part1(input);
+    let output = part2(input);
     dbg!(output);
 }
 
@@ -252,8 +271,8 @@ mod tests {
 
     #[test]
     #[rustfmt::skip]
-    fn part1_test() {
-        let result = part1("\
+    fn part2_test() {
+        let result = part2("\
 broadcaster -> a
 %a -> inv, con
 &inv -> b
@@ -261,5 +280,33 @@ broadcaster -> a
 &con -> output",
         );
         assert_eq!(result, 11687500);
+    }
+}
+
+mod utils {
+    fn gcd(a: usize, b: usize) -> usize {
+        let mut max = a;
+        let mut min = b;
+        if min > max {
+            std::mem::swap(&mut max, &mut min);
+        }
+
+        loop {
+            let res = max % min;
+            if res == 0 {
+                return min;
+            }
+
+            max = min;
+            min = res;
+        }
+    }
+
+    fn lcm(a: usize, b: usize) -> usize {
+        a * b / gcd(a, b)
+    }
+
+    pub fn lcmm(nums: Vec<usize>) -> usize {
+        nums.into_iter().reduce(lcm).unwrap()
     }
 }
