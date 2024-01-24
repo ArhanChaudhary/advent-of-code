@@ -9,6 +9,7 @@ let exec = util.promisify(exec_);
 let day = process.argv[2];
 let formatted_day = `day-${day.padStart(2, "0")}`;
 let part = process.argv[3];
+let year = process.argv[4] || new Date().getFullYear();
 
 async function part1() {
   await exec(`cargo new ${formatted_day}`);
@@ -17,7 +18,7 @@ async function part1() {
 
   let day_contents = await new Promise((resolve) => {
     https.get(
-      `https://adventofcode.com/${new Date().getFullYear()}/day/${day}`,
+      `https://adventofcode.com/${year}/day/${day}`,
       (res) => {
         let data = "";
         res.on("data", (chunk) => {
@@ -52,7 +53,7 @@ async function part1() {
     let file = fs.createWriteStream(`${formatted_day}/src/bin/input.txt`);
     let buffer = [];
     https.get(
-      `https://adventofcode.com/${new Date().getFullYear()}/day/${day}/input`,
+      `https://adventofcode.com/${year}/day/${day}/input`,
       {
         headers: {
           Cookie: `session=${process.env.AOC_COOKIE}`,
@@ -97,7 +98,7 @@ async function part1() {
 async function part2() {
   let day_contents = await new Promise((resolve) => {
     https.get(
-      `https://adventofcode.com/${new Date().getFullYear()}/day/${day}`,
+      `https://adventofcode.com/${year}/day/${day}`,
       {
         headers: {
           Cookie: `session=${process.env.AOC_COOKIE}`,
