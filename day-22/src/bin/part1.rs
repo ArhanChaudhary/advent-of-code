@@ -1,15 +1,19 @@
-use itertools::Itertools;
-use std::cell::UnsafeCell;
+use std::{
+    cell::{Cell, RefCell},
+    collections::{BTreeSet, HashMap, HashSet},
+    hash::{Hash, Hasher},
+};
 
-#[derive(Debug)]
-struct Point(usize, usize, usize);
-impl PartialEq for Point {
-    fn eq(&self, other: &Self) -> bool {
-        self.0 == other.0 && self.1 == other.1 && self.2 == other.2
-    }
+use itertools::Itertools;
+
+#[derive(PartialEq, Debug)]
+struct BrickEnd {
+    x: usize,
+    y: usize,
+    z: Cell<usize>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum Orientation {
     AlongX,
     AlongY,
@@ -17,15 +21,15 @@ enum Orientation {
     None,
 }
 impl Orientation {
-    fn from_points(p1: &Point, p2: &Point) -> Self {
-        let diff_x = p1.0 != p2.0;
-        let diff_y = p1.1 != p2.1;
-        let diff_z = p1.2 != p2.2;
+    fn from_brick_ends(e1: &BrickEnd, e2: &BrickEnd) -> Self {
+        let diff_x = e1.x != e2.x;
+        let diff_y = e1.y != e2.y;
+        let diff_z = e1.z != e2.z;
         let diff_counts = (diff_x as u8) + (diff_y as u8) + (diff_z as u8);
         if diff_counts == 0 {
             Orientation::None
         } else if diff_counts != 1 {
-            panic!("Invalid orientation from points: {:?} and {:?}", p1, p2);
+            panic!("Invalid orientation from points: {:?} and {:?}", e1, e2);
         } else if diff_x {
             Orientation::AlongX
         } else if diff_y {
@@ -38,64 +42,67 @@ impl Orientation {
     }
 }
 
-#[derive(Debug)]
 struct Brick<'a> {
-    upper_point: Point,
-    lower_point: Point,
+    upper_end: BrickEnd,
+    lower_end: BrickEnd,
     orientation: Orientation,
-    held_by_count: usize,
-    holds: Vec<&'a Brick<'a>>,
+    held_by_count: Cell<usize>,
+    holds: RefCell<Vec<&'a Brick<'a>>>,
 }
 impl PartialEq for Brick<'_> {
     fn eq(&self, other: &Self) -> bool {
-        self.upper_point == other.upper_point && self.lower_point == other.lower_point
+        self.upper_end == other.upper_end && self.lower_end == other.lower_end
+    }
+}
+impl Eq for Brick<'_> {}
+impl Hash for Brick<'_> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.upper_end.x.hash(state);
+        self.upper_end.y.hash(state);
+        self.lower_end.x.hash(state);
+        self.lower_end.y.hash(state);
+    }
+}
+impl PartialOrd for Brick<'_> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+impl Ord for Brick<'_> {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        other.upper_end.z.get().cmp(&self.upper_end.z.get())
     }
 }
 impl Brick<'_> {
-    fn from(mut upper_point: Point, mut lower_point: Point) -> Self {
-        if upper_point.2 < lower_point.2
-            || upper_point.1 < lower_point.1
-            || upper_point.0 < lower_point.0
-        {
-            std::mem::swap(&mut upper_point, &mut lower_point);
+    fn from(mut upper_end: BrickEnd, mut lower_end: BrickEnd) -> Self {
+        if upper_end.z < lower_end.z || upper_end.y < lower_end.y || upper_end.x < lower_end.x {
+            std::mem::swap(&mut upper_end, &mut lower_end);
         }
-        let orientation = Orientation::from_points(&upper_point, &lower_point);
+        let orientation = Orientation::from_brick_ends(&upper_end, &lower_end);
         Brick {
-            upper_point,
-            lower_point,
+            upper_end,
+            lower_end,
             orientation,
-            held_by_count: 0,
-            holds: Vec::new(),
+            held_by_count: Cell::new(0),
+            holds: RefCell::new(Vec::new()),
         }
     }
-
-    fn contains_point(&self, point: &Point) -> bool {
+    fn point_xys(&self) -> Box<dyn Iterator<Item = [usize; 2]> + '_> {
         match self.orientation {
-            Orientation::AlongX => {
-                self.lower_point.1 == point.1
-                    && self.lower_point.2 == point.2
-                    && self.lower_point.0 <= point.0
-                    && point.0 <= self.upper_point.0
+            Orientation::AlongX => Box::new(
+                (self.lower_end.x..=self.upper_end.x).map(|point_x| [point_x, self.lower_end.y]),
+            ),
+            Orientation::AlongY => Box::new(
+                (self.lower_end.y..=self.upper_end.y).map(|point_y| [self.lower_end.x, point_y]),
+            ),
+            Orientation::AlongZ | Orientation::None => {
+                Box::new(std::iter::once([self.lower_end.x, self.lower_end.y]))
             }
-            Orientation::AlongY => {
-                self.lower_point.0 == point.0
-                    && self.lower_point.2 == point.2
-                    && self.lower_point.1 <= point.1
-                    && point.1 <= self.upper_point.1
-            }
-            Orientation::AlongZ => {
-                self.lower_point.0 == point.0
-                    && self.lower_point.1 == point.1
-                    && self.lower_point.2 <= point.2
-                    && point.2 <= self.upper_point.2
-            }
-            Orientation::None => self.lower_point == *point,
         }
     }
 }
 
-#[derive(Debug)]
-struct Bricks<'a>(Vec<UnsafeCell<Brick<'a>>>);
+struct Bricks<'a>(Vec<Brick<'a>>);
 impl<'a> Bricks<'a> {
     fn from_input(input: &str) -> Self {
         Self(
@@ -109,97 +116,59 @@ impl<'a> Bricks<'a> {
                             .unwrap()
                             .split(',')
                             .map(|number_str| number_str.parse().unwrap());
-                        Point(
-                            parsed_numbers_iter.next().unwrap(),
-                            parsed_numbers_iter.next().unwrap(),
-                            parsed_numbers_iter.next().unwrap(),
-                        )
+                        BrickEnd {
+                            x: parsed_numbers_iter.next().unwrap(),
+                            y: parsed_numbers_iter.next().unwrap(),
+                            z: Cell::new(parsed_numbers_iter.next().unwrap()),
+                        }
                     };
                     Brick::from(next_brick_point(), next_brick_point())
                 })
-                .sorted_by(|a, b| a.lower_point.2.cmp(&b.lower_point.2))
-                .map(UnsafeCell::new)
+                .sorted_by(|a, b| a.lower_end.z.cmp(&b.lower_end.z))
                 .collect(),
         )
     }
 
-    fn get_at(&self, p: &Point) -> Option<&'a mut Brick> {
-        self.0
-            .iter()
-            .find_map(|brick_iter| {
-                let brick_iter = unsafe { &mut *brick_iter.get() };
-                if brick_iter.contains_point(p) {
-                    Some(brick_iter)
-                } else {
-                    None
-                }
-            })
-    }
-
-    fn get_bricks_directly_below(&self, brick: &Brick) -> Option<Vec<&'a mut Brick>> {
-        match brick.orientation {
-            Orientation::AlongX => {
-                let mut bricks_directly_below_iter = (brick.lower_point.0..=brick.upper_point.0)
-                    .filter_map(|point_x| {
-                        self.get_at(&Point(
-                            point_x,
-                            brick.lower_point.1,
-                            brick.lower_point.2 - 1,
-                        ))
-                    })
-                    .peekable();
-                if bricks_directly_below_iter.peek().is_some() {
-                    let mut bricks_directly_below = bricks_directly_below_iter.collect::<Vec<_>>();
-                    bricks_directly_below.dedup();
-                    Some(bricks_directly_below)
-                } else {
-                    None
-                }
-            }
-            Orientation::AlongY => {
-                let mut bricks_directly_below_iter = (brick.lower_point.1..=brick.upper_point.1)
-                    .filter_map(|point_y| {
-                        self.get_at(&Point(
-                            brick.lower_point.0,
-                            point_y,
-                            brick.lower_point.2 - 1,
-                        ))
-                    })
-                    .peekable();
-                if bricks_directly_below_iter.peek().is_some() {
-                    let mut bricks_directly_below_iter = bricks_directly_below_iter.collect::<Vec<_>>();
-                    bricks_directly_below_iter.dedup();
-                    Some(bricks_directly_below_iter)
-                } else {
-                    None
-                }
-            }
-            Orientation::AlongZ | Orientation::None => self
-                .get_at(&Point(
-                    brick.lower_point.0,
-                    brick.lower_point.1,
-                    brick.lower_point.2 - 1,
-                ))
-                .map(|brick_right_below| vec![brick_right_below]),
-        }
-    }
-
     fn fall(&'a self) {
+        // it's safe to use btreeset because the order of the bricks according
+        // to their z value wont change no matter how much they fall.
+        let mut xy_to_bricks: HashMap<[usize; 2], BTreeSet<&Brick>> = HashMap::new();
         for brick in &self.0 {
-            let brick = unsafe { &mut *brick.get() };
-            loop {
-                if brick.lower_point.2 <= 1 {
-                    break;
+            for point_xy in brick.point_xys() {
+                xy_to_bricks.entry(point_xy).or_default().insert(brick);
+            }
+        }
+        for brick in &self.0 {
+            let mut highest_will_fall_on = 0;
+            #[allow(clippy::mutable_key_type)]
+            let mut will_fall_on_bricks: HashSet<&Brick> = HashSet::new();
+            for point_xy in brick.point_xys() {
+                let Some(&point_will_fall_on) = xy_to_bricks
+                    .get(&point_xy)
+                    .unwrap()
+                    .range::<Brick, _>(brick..)
+                    .nth(1)
+                else {
+                    continue;
+                };
+                let point_will_fall_on_height = point_will_fall_on.upper_end.z.get();
+                if point_will_fall_on_height < highest_will_fall_on {
+                    continue;
                 }
-                if let Some(bricks_right_below) = self.get_bricks_directly_below(brick) {
-                    brick.held_by_count += bricks_right_below.len();
-                    for brick_right_below in bricks_right_below {
-                        brick_right_below.holds.push(brick);
-                    }
-                    break;
+                if point_will_fall_on_height > highest_will_fall_on {
+                    will_fall_on_bricks.clear();
+                    highest_will_fall_on = point_will_fall_on_height;
                 }
-                brick.upper_point.2 -= 1;
-                brick.lower_point.2 -= 1;
+                will_fall_on_bricks.insert(point_will_fall_on);
+            }
+            let diff = brick.lower_end.z.get() - highest_will_fall_on - 1;
+            brick.upper_end.z.set(brick.upper_end.z.get() - diff);
+            brick.lower_end.z.set(brick.lower_end.z.get() - diff);
+            brick
+                .held_by_count
+                .set(brick.held_by_count.get() + will_fall_on_bricks.len());
+            for will_fall_on_brick in will_fall_on_bricks {
+                will_fall_on_brick.holds.borrow_mut().push(brick);
             }
         }
     }
@@ -207,13 +176,14 @@ impl<'a> Bricks<'a> {
     fn solve(&self) -> usize {
         self.0
             .iter()
-            .filter(|brick| {
-                let brick = unsafe { &*brick.get() };
-                brick.holds.iter().all(|held_by_this| {
-                    if held_by_this.held_by_count == 0 {
-                        panic!("invalid held by count, {:#?}", brick);
+            .filter(|&brick| {
+                brick.holds.borrow().iter().all(|&brick_hold| {
+                    let brick_hold_held_by_count = brick_hold.held_by_count.get();
+                    if brick_hold_held_by_count == 0 {
+                        panic!("invalid held by count");
+                    } else {
+                        brick_hold_held_by_count > 1
                     }
-                    held_by_this.held_by_count > 1
                 })
             })
             .count()
