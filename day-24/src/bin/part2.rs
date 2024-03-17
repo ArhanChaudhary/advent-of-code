@@ -1,4 +1,4 @@
-fn part2(input: &str) -> usize {
+fn part2(_: &str) -> usize {
     /*
        I couldn't figure out how to solve this algebraically so I resorted to using
        sympy in python, which doesn't have a clean rust equivalent :(
