@@ -369,7 +369,7 @@ xtg: srq
 fmj: kpm
 nsv: nnz bhz kjt nbc
 ftg: zls xtg xpl jvc
-bkm: rqp kfg vgp ldk
+bkm: rqp kfg vgp
 qzc: sqf
 gkl: nhv gkj djh
 nrz: hkh rph
@@ -491,7 +491,7 @@ lkh: dcl lsl phf
 tkf: psh
 rnr: qzb hsf
 sbr: vzd rnr
-zmq: txl tmd kbt kcf pgh
+zmq: txl tmd kbt kcf
 hdh: hzr ddv knm vgm
 sjh: rnr bnr
 rgr: ngm xkt bzs vzn
@@ -1223,7 +1223,7 @@ dlx: jkm qds
 rcf: lvb cnr lcs zjq
 qns: zdh dbc szv trr jct jpf
 ggk: qdt lsx
-bvc: rsm jqs mgj fhz jvh
+bvc: jqs mgj fhz jvh
 dqn: zzx jnt lrz ffd
 clb: fsx
 zqn: mdp nrv pdf

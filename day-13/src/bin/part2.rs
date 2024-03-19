@@ -6,7 +6,7 @@ fn main() {
     dbg!(output);
 }
 
-fn find_reflection_index(pattern: &Vec<String>) -> Option<usize> {
+fn find_reflection_index(pattern: &[String]) -> Option<usize> {
     pattern
         .iter()
         .tuple_windows()
@@ -46,7 +46,7 @@ fn find_reflection_index(pattern: &Vec<String>) -> Option<usize> {
         })
 }
 
-fn rotate_pattern(pattern: &Vec<String>) -> Vec<String> {
+fn rotate_pattern(pattern: &[String]) -> Vec<String> {
     // literally rotate the entire thing by -90 degrees
     (0..pattern[0].len())
         .map(|j| {
